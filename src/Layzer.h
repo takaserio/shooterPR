@@ -16,18 +16,12 @@ class Layzer {
     public:
         void move();
 
-        // attack
+        // attackd
         void collision();
         void die();
+        void updateBuffer(char **);
 
-    public: Layzer(int x, int y, Character *owner) {
-        x = x;
-        y = y;
-        owner = owner;
-        direction = owner->direction;
-        speed = owner->getLayzerSpeed();
-        damage = owner->getPower();
-    }
+    public: Layzer(int x, int y, Character *owner);
 };
 
 #endif

@@ -15,3 +15,14 @@ void EnemyManager::deleteEnemy(int index) {
     delete enemies[index];
     enemy_alive[index] = false;
 }
+
+void EnemyManager::moveAllEnemies() {
+    
+}
+
+void EnemyManager::updateBuffer(char **map_buffer) {
+    for (int i = 0; i < MAX_ENEMIES; i++) {
+        if (enemy_alive[i]) {
+        }
+    }
+}

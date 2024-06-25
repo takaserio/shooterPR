@@ -14,8 +14,15 @@ class EnemyManager {
 
     public:
         void spawn(int x, int y, enum EnemyType enemy_type);
-        void moveAllCharacters();
+        void moveAllEnemies();
         void deleteEnemy(int index);
+        void updateBuffer(char **map_buffer);
+
+        EnemyManager() {
+            for (int i = 0; i < MAX_ENEMIES; i++) {
+                enemy_alive[i] = false;
+            }
+        }
 };
 
 #endif

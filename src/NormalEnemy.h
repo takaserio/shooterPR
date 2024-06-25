@@ -12,7 +12,7 @@ class NormalEnemy : public Enemy {
     private:
 
     public:
-        void move();
+        void move(char **map_data);
 
     public: NormalEnemy(int x, int y, EnemyManager *enemy_manager, int index) : Enemy(x, y, NORMAL_HP, NORMAL_LAYZER_SPEED, NORMAL_POWER, enemy_manager, index) {
             body = (char **) normal_enemy;

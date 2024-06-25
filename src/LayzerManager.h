@@ -18,9 +18,7 @@ class LayzerManager {
         void moveAllLayzer();
         //void killLayzer(int index);
 
-    public: LayzerManager(Character *owner) {
-        owner = owner;
-    }
+    public: LayzerManager(Character *owner);
 
     public: ~LayzerManager() {
         for (int i = 0; i < MAX_LAYZER; i++) {
