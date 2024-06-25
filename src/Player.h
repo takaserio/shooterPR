@@ -16,10 +16,10 @@ class Player : public Character {
 
     public:
         void move(int key_input, char **map_data);
-
-    public: Player() : Character(PLAYER_DIRECTION, PLAYER_INIT_X, PLAYER_INIT_Y, PLAYER_HP, PLAYER_LAYZER_SPEED, PLAYER_POWER) {
+        void getDamaged(int damage);
+        Player() : Character(PLAYER_DIRECTION, PLAYER_INIT_X, PLAYER_INIT_Y, PLAYER_HP, PLAYER_LAYZER_SPEED, PLAYER_POWER) {
             body = (char **) player;
-        }
+        };
 };
 
 #endif

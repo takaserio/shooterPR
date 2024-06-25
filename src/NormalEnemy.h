@@ -2,7 +2,6 @@
 #define NORMALENEMY
 
 #include "Enemy.h"
-#include "EnemyManager.h"
 
 #define NORMAL_HP 100
 #define NORMAL_LAYZER_SPEED 1
@@ -13,10 +12,9 @@ class NormalEnemy : public Enemy {
 
     public:
         void move(char **map_data);
-
-    public: NormalEnemy(int x, int y, EnemyManager *enemy_manager, int index) : Enemy(x, y, NORMAL_HP, NORMAL_LAYZER_SPEED, NORMAL_POWER, enemy_manager, index) {
+        NormalEnemy(int x, int y) : Enemy(x, y, NORMAL_HP, NORMAL_LAYZER_SPEED, NORMAL_POWER) {
             body = (char **) normal_enemy;
-        }
+        };
 };
 
 #endif

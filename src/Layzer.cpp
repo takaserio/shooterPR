@@ -1,12 +1,18 @@
 #include "Layzer.h"
 
-Layzer::Layzer(int x, int y, Character *owner) {
+Layzer::Layzer(int x, int y, enum Direction direction, int speed, int damage) {
     this->x = x;
     this->y = y;
-    this->owner = owner;
-    this->direction = owner->direction;
-    speed = owner->getLayzerSpeed();
-    damage = owner->getPower();
+    this->direction = direction;
+    this->speed = speed;
+    this->damage = damage;
+}
+
+void Layzer::move() {
+    switch (direction) {
+        case UP:   y -= 1; break;
+        case DOWN: y += 1; break;
+    }
 }
 
 void Layzer::updateBuffer(char **map_buffer) {

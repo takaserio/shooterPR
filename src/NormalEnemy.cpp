@@ -2,6 +2,11 @@
 
 #include "NormalEnemy.h"
 
+/*
+NormalEnemy::NormalEnemy(int x, int y) : Enemy(x, y, NORMAL_HP, NORMAL_LAYZER_SPEED, NORMAL_POWER) {
+    body = (char **) normal_enemy;
+}*/
+
 void NormalEnemy::move(char **map_data) {
     int rand = std::rand() % 60;
     

@@ -11,6 +11,23 @@ using namespace std;
 // 4 enemy
 // 5 enemy's layzer
 
+Map::Map(int map_number) {
+    this->map_number;
+
+    switch (map_number) {
+        default:
+            for (int i = 0; i < MAP_HEIGHT; i++) {
+                for (int j = 0; j < MAP_WIDTH; j++) {
+                    if ((MAP_HEIGHT - 1 == i || 0 == i) || (MAP_WIDTH - 1 == j || j == 0)) {
+                    map_data[i][j] = 1;
+                } else {
+                    map_data[i][j] = 0;
+                }
+            }
+        }
+    }
+}
+
 void Map::drawBuffer() {
     for (int i = 0; i < MAP_HEIGHT; i++) {
         for (int j = 0; j < MAP_WIDTH; j++) {

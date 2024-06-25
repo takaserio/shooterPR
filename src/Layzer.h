@@ -1,13 +1,12 @@
 #ifndef LAYZER
 #define LAYZER
 
-#include "Character.h"
-#include "body_data"
+//#include "Character.h"
+#include "DirectionEnum"
 
 class Layzer {
     private:
         int x, y;
-        Character *owner;
         char **body;
         int speed;
         int direction;
@@ -21,7 +20,7 @@ class Layzer {
         void die();
         void updateBuffer(char **);
 
-    public: Layzer(int x, int y, Character *owner);
+    public: Layzer(int x, int y, enum Direction direction, int speed, int damage);
 };
 
 #endif

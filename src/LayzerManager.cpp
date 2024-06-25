@@ -1,12 +1,20 @@
 #include "LayzerManager.h"
 #include "Layzer.h"
 
-LayzerManager::LayzerManager(Character *owner) : owner(owner) {};
+LayzerManager::LayzerManager() {};
 
-void LayzerManager::spawn(int x, int y) {
+LayzerManager::~LayzerManager() {
+    for (int i = 0; i < MAX_LAYZER; i++) {
+        if (layzerAlive[i]) {
+            delete layzers[i];
+        }
+    }
+}
+
+void LayzerManager::spawn(int x, int y, enum Direction direction, int speed, int damage) {
     for (int i = 0; i < MAX_LAYZER; i++) {
         if (!layzerAlive[i]) {
-            layzers[i] = new Layzer(x, y, owner);
+            layzers[i] = new Layzer(x, y, direction, speed, damage);
 
             break;
         }

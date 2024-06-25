@@ -2,7 +2,7 @@
 #include <chrono>
 #include <thread>
 
-#include "input.cpp"
+#include "input.lib"
 #include "Player.h"
 #include "Enemy.h"
 #include "Map.h"

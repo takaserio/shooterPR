@@ -1,6 +1,11 @@
+#ifndef DIRECTION
+#define DIRECTION
+
 enum Direction {
     UP,
     DOWN,
     RIGHT,
     LEFT,
 };
+
+#endif

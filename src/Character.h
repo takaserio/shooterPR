@@ -3,12 +3,7 @@
 
 #include "LayzerManager.h"
 #include "DirectionEnum"
-#include "body_data"
-
-
-class LayzerManager {
-    
-};
+#include "BodyDataManager.h"
 
 class Character {
     protected:
@@ -28,8 +23,8 @@ class Character {
     public:
         bool isDead();
         void layzerAttack(); // make a layzer
-        virtual void move();
-        virtual void getDamaged(int damage);  // invoked when a collision of a layzer hit this character
+        void move();
+        void getDamaged(int damage);  // invoked when a collision of a layzer hit this character
         int getLayzerSpeed();
         bool nextIsWall(enum Direction direction, char **map_data);
         int getPower();
@@ -37,21 +32,8 @@ class Character {
         int getX();
         int getY();
 
-    public: Character(enum Direction direction, int x, int y, int hp, int layzer_speed, int power) {
-        direction = direction;
-        this->layzer_manager = new LayzerManager(this);
-        this->x = x;
-        this->y = y;
-        this->hp = hp;
-        this->layzer_speed = layzer_speed;
-        this->power = power;
-
-        dead = false;
-    }
-
-    public: ~Character() {
-        delete layzer_manager;
-    }
+        Character(enum Direction direction, int x, int y, int hp, int layzer_speed, int power);
+        ~Character();
 };  
 
 #endif

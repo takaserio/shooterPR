@@ -1,5 +1,10 @@
 #include "Player.h"
 
+/*
+Player::Player() : Character(PLAYER_DIRECTION, PLAYER_INIT_X, PLAYER_INIT_Y, PLAYER_HP, PLAYER_LAYZER_SPEED, PLAYER_POWER) {
+    body = (char **) player;
+}*/
+
 void Player::move(int key_input, char **map_data) {
     switch (key_input) {
         case 'w':
@@ -29,4 +34,8 @@ void Player::move(int key_input, char **map_data) {
         case ' ':
             layzerAttack();
     }
+}
+
+void Player::getDamaged(int damage) {
+    
 }

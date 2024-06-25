@@ -11,22 +11,12 @@ class LayzerManager {
         bool layzerAlive[MAX_LAYZER];
 
     public:
-        Character *owner;
-
-    public:
-        void spawn(int x, int y);
+        void spawn(int x, int y, enum Direction direction, int speed, int damage);
         void moveAllLayzer();
         //void killLayzer(int index);
 
-    public: LayzerManager(Character *owner);
-
-    public: ~LayzerManager() {
-        for (int i = 0; i < MAX_LAYZER; i++) {
-            if (layzerAlive[i]) {
-                delete layzers[i];
-            }
-        }
-    }
+    public: LayzerManager();
+    public: ~LayzerManager();
 };
 
 #endif

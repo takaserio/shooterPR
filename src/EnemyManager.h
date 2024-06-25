@@ -9,7 +9,7 @@
 
 class EnemyManager {
     private:
-       Character *enemies[100];
+       Enemy *enemies[100];
        bool enemy_alive[100];
 
     public:

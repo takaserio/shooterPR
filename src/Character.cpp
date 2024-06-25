@@ -1,5 +1,22 @@
 #include "Character.h"
 
+Character::Character(enum Direction direction, int x, int y, int hp, int layzer_speed, int power) {
+    this->direction = direction;
+    this->layzer_manager = new LayzerManager;
+    this->x = x;
+    this->y = y;
+    this->hp = hp;
+    this->layzer_speed = layzer_speed;
+    this->power = power;
+
+    dead = false;
+}
+
+Character::~Character() {
+    delete layzer_manager;
+    delete this;
+}
+
 int Character::getX() {
     return x;
 }
@@ -9,7 +26,7 @@ int Character::getY() {
 }
 
 void Character::layzerAttack() {
-    layzer_manager->spawn(x, y+2);
+    layzer_manager->spawn(x, y+2, direction, layzer_speed, power);
 }
 
 bool Character::nextIsWall(enum Direction direction, char **map_data) {

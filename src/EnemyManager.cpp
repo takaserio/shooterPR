@@ -5,7 +5,7 @@ void EnemyManager::spawn(int x, int y, enum EnemyType enemy_type) {
         if (!enemy_alive[i]) {
             switch (enemy_type) {
                 case NORMAL:
-                    enemy_alive[i] = new NormalEnemy(x, y, this, i);
+                    enemy_alive[i] = new NormalEnemy(x, y);
             }
         }
     }
