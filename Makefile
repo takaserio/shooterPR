@@ -3,9 +3,12 @@ TARGET_EXEC := shooter
 SRC_DIR := ./src
 BUILD_DIR := ./build
 
-SRCS := $(shell find $(SRC_DIR) -name '*cpp')
+SRCS := $(shell find $(SRC_DIR) -name '*c')
 
-OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
-$(TARGET_EXEC): $(SRCS)
-	g++ -o $@ $^
+$(TARGET_EXEC): ./src/main.c
+	gcc -o $@ -g $^
+
+t:	
+	@echo $(SRCS)
