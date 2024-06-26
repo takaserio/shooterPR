@@ -65,6 +65,7 @@ void InitCharacter(struct Character *character, int x, int y, enum Direction dir
     character->y = y;
     character->direction = direction;
     character->character_type = character_type;
+    character->hp = 100;
 
     for (int i = 0; i < MAX_LAYZERS; i++) {
         character->layzer_manager.layzers_alive[i] = 0;
@@ -89,11 +90,11 @@ void MakeLayzer(struct Character *character) {
 
             switch (character->direction) {
                 case UP:
-                    character->layzer_manager.layzers[i]->y = character->y - 1;
+                    character->layzer_manager.layzers[i]->y = character->y - 2;
                     break;
 
                 case DOWN:
-                    character->layzer_manager.layzers[i]->y = character->y + 1;
+                    character->layzer_manager.layzers[i]->y = character->y + 2;
             }
 
             break;
@@ -146,10 +147,6 @@ void moveAllLayzer(struct CharacterManager *character_manager) {
                             if (NextIsWallLayzer(character_manager->characters[i]->layzer_manager.layzers[j], character_manager->characters[i]->direction)) {
                                 // delete layzer
                                 DeleteLayzer(&(character_manager->characters[i]->layzer_manager), j);
-                            } else if (NextIsCharacterLayzer(character_manager->characters[i]->layzer_manager.layzers[j], character_manager->characters[i]->direction, character_manager)) {
-                                // reduce hp
-                                sleep(2);
-                                getDamaged(WhoIsAtXY(character_manager, character_manager->characters[i]->layzer_manager.layzers[j]->x, character_manager->characters[i]->layzer_manager.layzers[j]->y-1));
                             } else {
                                 character_manager->characters[i]->layzer_manager.layzers[j]->y -= 1;
                             }
@@ -158,8 +155,6 @@ void moveAllLayzer(struct CharacterManager *character_manager) {
                         case DOWN:
                             if (NextIsWallLayzer(character_manager->characters[i]->layzer_manager.layzers[j], character_manager->characters[i]->direction)) {
                                 DeleteLayzer(&(character_manager->characters[i]->layzer_manager), j);
-                            } else if (NextIsCharacterLayzer(character_manager->characters[i]->layzer_manager.layzers[j], character_manager->characters[i]->direction, character_manager)) { 
-                                getDamaged(WhoIsAtXY(character_manager, character_manager->characters[i]->layzer_manager.layzers[j]->x, character_manager->characters[i]->layzer_manager.layzers[j]->y+1));
                             } else {
                                 character_manager->characters[i]->layzer_manager.layzers[j]->y += 1;
                             }
@@ -171,8 +166,14 @@ void moveAllLayzer(struct CharacterManager *character_manager) {
     }
 }
 
-void getDamaged(struct Character *character) {
-    character->hp -= 50;
+#define LAYZER_POWER 50
+
+void getDamaged(struct CharacterManager *character_manager, int index) {
+    character_manager->characters[index]->hp -= LAYZER_POWER;
+
+    if (character_manager->characters[index]->hp < 1) {
+        DeleteCharacter(character_manager, index);
+    }
 }
 
 void DeleteLayzer(struct LayzerManager *layzer_manager, int index) {
@@ -321,8 +322,9 @@ void SpawnCharacter(struct CharacterManager *character_manager, int x, int y, en
     }    
 }
 
-void DeleteCharacter() {
-
+void DeleteCharacter(struct CharacterManager *character_manager, int index) {
+    free(character_manager->characters[index]);
+    character_manager->character_alive[index] = 0;
 }
 
 int getch(void) {
@@ -340,6 +342,33 @@ int getch(void) {
 void InputThread(int *key_input) {
     while (1) {
         *key_input = getch();
+    }
+}
+
+// If any layzers and a particular character is at same cordinate, call DeleteCharacter()
+void Collision(struct CharacterManager *character_manager) {
+    // specify a character
+    for (int i = 0; i < 100; i++) {
+        if (character_manager->character_alive[i]) {
+            int character_x = character_manager->characters[i]->x;
+            int character_y = character_manager->characters[i]->y;
+
+            for (int j = 0; j < 100; j++) {
+                if (character_manager->character_alive[j]) {
+                    for (int k = 0; k < MAX_LAYZERS; k++) {
+                        if (character_manager->characters[j]->layzer_manager.layzers_alive[k]) {
+                            int layzer_x = character_manager->characters[j]->layzer_manager.layzers[k]->x;
+                            int layzer_y = character_manager->characters[j]->layzer_manager.layzers[k]->y;
+
+                            if ((character_x == layzer_x) && (character_y == layzer_y)) {
+                                getDamaged(character_manager, i);
+                            }
+                        }
+                    }
+                }
+            }
+            
+        }
     }
 }
 
@@ -366,6 +395,8 @@ int main() {
         moveAllLayzer(&character_manager);
         moveAllEnemies(&character_manager);
         MovePlayer(character_manager.characters[0], &key_input, pre_key_input);
+
+        Collision(&character_manager);
 
         draw(&character_manager);
 
