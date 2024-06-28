@@ -12,9 +12,10 @@
 #define MAP_HEIGHT 30
 #define MAP_WIDTH  30
 
+// LayzerManager can hold references to layzers equal number to MAX_CHARACTERS
 #define MAX_LAYZERS 100 
 
-// CharacterManager can hold reference to character equal to MAX_CHARACTERS
+// CharacterManager can hold references to characters equal number to MAX_CHARACTERS
 #define MAX_CHARACTERS 100
 
 #define ITEM_NUM 3
@@ -26,7 +27,7 @@ struct InfoDisplay {
 };
 
 struct Layzer {
-    int x, y;
+    int x, y; // core coodinates of a Character
     int leftX, topY;
     char (*body)[LAYZER_WIDTH][DATA_DISPLAYED];
     enum Direction direction;
@@ -37,11 +38,14 @@ struct LayzerManager {
     int layzers_alive[MAX_LAYZERS];
 };
 
+// LeftX and topY might confusing.
+// To understand what are they, reading drawMapBuffer() is good.
 struct Character {
-    int x, y; // core
+    int x, y;
     int leftX, topY;
     char (*body)[CHARACTER_WIDTH][DATA_DISPLAYED];
     int hp;
+    int layzer_power; 
     struct LayzerManager layzer_manager;
     enum Direction direction;
     enum LayzerType layzerType;
@@ -59,7 +63,7 @@ struct CharacterManager {
 // 4 layzer
 char map_data[MAP_HEIGHT][MAP_WIDTH][DATA_DISPLAYED];
 
-void initInfoDisplay(struct InfoDisplay *infoDisplay) {
+void InitInfoDisplay(struct InfoDisplay *infoDisplay) {
     infoDisplay->itemNum = ITEM_NUM;
     infoDisplay->score = 0;
     infoDisplay->msg = 0;
@@ -88,7 +92,7 @@ void InitCharacter(struct Character *character, int x, int y, enum Direction dir
     character->layzerType = layzerType;
 
     switch (characterType) {
-        case PLAYER: // Player
+        case PLAYER: 
             character->body = player;
             break;
 
@@ -118,6 +122,8 @@ void DeleteCharacter(struct CharacterManager *character_manager, int index) {
     character_manager->character_alive[index] = 0;
 }
 
+// # TODO
+// Consider the body of the object
 int NextIsWall(int x, int y, enum Direction direction) {
     switch (direction) {
         case UP   : return (!strcmp(map_data[y - 1][x], "@"));
@@ -127,8 +133,9 @@ int NextIsWall(int x, int y, enum Direction direction) {
     }
 }
 
+// # TODO
+// the power_layzer of the character should be used.
 #define LAYZER_POWER 50
-
 void getDamaged(struct CharacterManager *character_manager, int character_index) {
     character_manager->characters[character_index]->hp -= LAYZER_POWER;
 
@@ -137,7 +144,10 @@ void getDamaged(struct CharacterManager *character_manager, int character_index)
     }
 }
 
-// Layzer use this
+// # TODO
+// Consier the body of the character
+
+// The function is used by layzers
 int NextIsCharacter(struct Layzer *layzer, enum Direction direction, struct CharacterManager *character_manager) {
     int layzer_x = layzer->x;
     int layzer_y = layzer->y;
@@ -159,14 +169,6 @@ int NextIsCharacter(struct Layzer *layzer, enum Direction direction, struct Char
     }
 
     return 0;
-    
-    /*
-    switch (direction) {
-        case UP:
-            break;
-        case DOWN:
-            break;
-    }*/
 }
 
 void MakeLayzer(struct Character *character) {
@@ -178,7 +180,7 @@ void MakeLayzer(struct Character *character) {
             // shortcut refe
             struct Layzer *layzerPtr = character->layzer_manager.layzers[i];
 
-            // init layzer
+            // Initialize layzer
             layzerPtr->direction = character->direction;
             layzerPtr->x = character->x;
 
@@ -191,6 +193,8 @@ void MakeLayzer(struct Character *character) {
                     layzerPtr->y = character->y + 2;
             }
 
+            // # TODO
+            // Caluculate leftX and topY using LAYZER_WIDTH and LAYZER_HEIGHT
             layzerPtr->leftX = layzerPtr->x - 1;
             layzerPtr->topY = layzerPtr->y - 1;
 
@@ -205,6 +209,7 @@ void MakeLayzer(struct Character *character) {
             
             default:
                 printf("ERROR: layzer body not fould\n");
+                printf("[Init of layzer(%d) is not completed.]\n", i);
                 sleep(3);
             }
 
@@ -245,16 +250,23 @@ void MovePlayer(struct Character *player, int *key_input, int pre_key_input) {
 
         case ' ':
             MakeLayzer(player);
+
+            // To preven stopping player when ' ' is typed
+            // use previous input
+            
+            // This might cause a race condition because key_input is deferenced by another thread to get inputs
+            // But.... This is not a big problem.
             *key_input = pre_key_input;
             MovePlayer(player, key_input, pre_key_input);
             break;
     }
 }
 
-// In the future, I think all enemies have their own move patterns.
+// # TODO
+// Have All enemies their own move patterns
 void moveAllCharacters(struct CharacterManager *character_manager, int *key_input, int pre_key_input) {
     for (int i = 0; i < MAX_CHARACTERS; i++) {
-        // only the direction of Player is UP so the loop hasn't impact on Player
+        // Filter player using direction. (only player have UP direction)
         if ((character_manager->character_alive[i] == 1) && (character_manager->characters[i]->direction == DOWN)) {
             // shortcut reference
             struct Character *characterPtr = character_manager->characters[i];
@@ -288,6 +300,7 @@ void moveAllCharacters(struct CharacterManager *character_manager, int *key_inpu
 }
 
 // This name reminds me ARP... I miss you.
+// This function is no longer used!!
 struct Character *WhoIsAtXY(struct CharacterManager *character_manager, int x, int y) {
     for (int i = 0; i < 100; i++) {
         if (character_manager->character_alive[i]) {
@@ -298,7 +311,7 @@ struct Character *WhoIsAtXY(struct CharacterManager *character_manager, int x, i
     }
 }
 
-void moveAllLayzer(struct CharacterManager *character_manager) {
+void MoveAllLayzer(struct CharacterManager *character_manager) {
     for (int i = 0; i < MAX_CHARACTERS; i++) {
         if (character_manager->character_alive[i]) {
             // shortcut reference
@@ -312,10 +325,8 @@ void moveAllLayzer(struct CharacterManager *character_manager) {
                     switch (layzerPtr->direction) {
                         case UP:
                             if (NextIsWall(layzerPtr->x, layzerPtr->y, layzerPtr->direction)) {
-                                // delete layzer
                                 DeleteLayzer(&(characterPtr->layzer_manager), j);
                             } else {
-                                // move normaly
                                 layzerPtr->y -= 1;
                                 layzerPtr->topY -= 1;
                             }
@@ -343,24 +354,26 @@ void drawInfoDisplay(struct InfoDisplay *infoDisplay) {
     printf("\n");
 }
 
+// What is this function?
 void updateBuffer(struct InfoDisplay *infoDisplay, int score, int playerHp, char *msg) {
     infoDisplay->score = score;
     infoDisplay->playerHp = playerHp;
     infoDisplay->msg = msg;
 }
 
+// This function renders data before drawing.
 void drawMapBuffer(struct CharacterManager *character_manager) {
     // make a buffer displayed.
+    // All infomation, player, enemies, layzers..., is inserted into the buffer.
     char buffer[MAP_HEIGHT][MAP_WIDTH][100];
 
-    // copy map_data to buffer
     for (int i = 0; i < MAP_HEIGHT; i++) {
         for (int j = 0; j < MAP_WIDTH; j++) {
             strcpy(buffer[i][j], map_data[i][j]);
         }
     }
 
-    // insert player and layzer 's data into buffer
+    // insert player and layzer's data into buffer
     for (int i = 0; i < 100; i++) {
         if (character_manager->character_alive[i]) {
             // shortcut refe
@@ -397,7 +410,9 @@ void drawMapBuffer(struct CharacterManager *character_manager) {
         }
     }
 
-    // converting 2 decimal array into 1 decimal might be good.
+    // # TODO
+    // convert 2 dimensional array into 1 dimensional before outputing into stdout
+    // to reduce latency of drawing
     for (int i = 0; i < MAP_HEIGHT; i++) {
         for (int j = 0; j < MAP_WIDTH; j++) {
             printf("%s", buffer[i][j]);
@@ -422,12 +437,13 @@ void SpawnCharacter(struct CharacterManager *character_manager, int x, int y, en
             character_manager->character_alive[i] = 1;
 
             InitCharacter(character_manager->characters[i], x, y, direction, character_type, hp, layzerType);
-
             break;
         }
     }    
 }
 
+
+// This function is used to get a input without Enter
 int getch(void) {
     struct termios oldattr, newattr;
     int ch;
@@ -446,9 +462,10 @@ void InputThread (int *key_input) {
     }
 }
 
-// If any layzers and a particular character is at same cordinate, call DeleteCharacter()
+// # TODO 
+// Consider body of object
+// This function uses core coodinates for collision detection now
 void Collision(struct CharacterManager *character_manager) {
-    // specify a character
     for (int i = 0; i < MAX_CHARACTERS; i++) {
         if (character_manager->character_alive[i]) {
             // shortcut reference
@@ -503,7 +520,7 @@ void TestGame() {
     srand(time(NULL));
     pthread_create(&thread_id, NULL, InputThread, &key_input);
 
-    initInfoDisplay(&infoDisplay);
+    InitInfoDisplay(&infoDisplay);
     InitCharacterManager(&character_manager);
     InitMapData();
 
@@ -511,19 +528,18 @@ void TestGame() {
     SpawnCharacter(&character_manager, 4, 4, DOWN, KAI, 100, REDBEAM);
     SpawnCharacter(&character_manager, 11, 5, DOWN, KAI, 100, REDBEAM);
 
+    // shortcut refe
     struct Character *player = character_manager.characters[0];
 
+    // Collision detection is peformed after all character and layzers moved
     while (!win && !lose) {
-        moveAllLayzer(&character_manager);
+        MoveAllLayzer(&character_manager);
         moveAllCharacters(&character_manager, &key_input, pre_key_input);
 
         Collision(&character_manager);
+
         UpdateInfoDisplay(&infoDisplay, score, player->hp, NULL);
-
         draw(&infoDisplay, &character_manager);
-
-        pre_key_input = key_input;
-        usleep(msecounds);
 
         if (!character_manager.character_alive[0]) {
             printf("----- GAME OVER -----\n");
@@ -538,6 +554,9 @@ void TestGame() {
                 win = 1;
             }
         }
+
+        pre_key_input = key_input;
+        usleep(msecounds);
     }
 
     pthread_cancel(thread_id);
@@ -546,9 +565,13 @@ void TestGame() {
 }
 
 int main() {
+    // I think managing user input using a integer is better, but somehow scanf("%d", &user_input) makes a loop bug.
     char user_input[100];
     int quit = 0;
 
+    // Umm...
+    // Using tools for creating a logo? ascii art seems better \(ツ)/.
+    // making a tool like it is not a bad idea. It sounds fun.
     printf(" ____  |                  _______   \n");
     printf("/      |____  _____   _____  |  ____  | __\n");
     printf("|____  |   | /     \\ /     \\ | /    | |/   \n");
@@ -564,6 +587,7 @@ int main() {
 
         printf("\x1b[32;40m>\x1b[37;40m");
         scanf("%s", user_input);
+        printf("\n");
 
         switch (user_input[0]) {
             case '1': TestGame(); break;
@@ -572,7 +596,5 @@ int main() {
                 printf("Invalid Input\n");
         }
     }
-    
-
     return 0;
 }

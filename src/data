@@ -20,11 +20,11 @@ enum Direction {
 
 enum CharacterType {
     PLAYER,
-    KAI,
+    KAI, // normal enemy
 };
 
 enum LayzerType {
-    REDBEAM, // normal
+    REDBEAM,
     GREENBEAM,
 };
 
