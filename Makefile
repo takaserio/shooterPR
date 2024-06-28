@@ -7,7 +7,8 @@ SRCS := $(shell find $(SRC_DIR) -name '*c')
 
 OBJS := $(SRCS:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
 
-build: ./src/main.c
+
+Build: ./src/main.c
 	gcc -o $(TARGET_EXEC) -g $^
 #./shooter
 

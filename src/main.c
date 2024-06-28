@@ -488,12 +488,14 @@ void UpdateInfoDisplay(struct InfoDisplay *infoDisplay, int score, int hp, char 
     infoDisplay->playerHp = hp;
 }
 
-int main() {
+void TestGame() {
     struct CharacterManager character_manager;
     struct InfoDisplay infoDisplay;
     int key_input = 0;
     int pre_key_input = 0;
     int win = 0;
+    int lose = 0;
+    int done = 0;
     int score = 0;
     pthread_t thread_id;
     unsigned int msecounds = 100000;
@@ -511,7 +513,7 @@ int main() {
 
     struct Character *player = character_manager.characters[0];
 
-    while (!win) {
+    while (!win && !lose) {
         moveAllLayzer(&character_manager);
         moveAllCharacters(&character_manager, &key_input, pre_key_input);
 
@@ -525,8 +527,7 @@ int main() {
 
         if (!character_manager.character_alive[0]) {
             printf("----- GAME OVER -----\n");
-            win = 1;
-            return 0;
+            lose = 1;
         }
 
         for (int i = 1; i < MAX_CHARACTERS; i++) {
@@ -535,10 +536,43 @@ int main() {
             } else if (i == MAX_CHARACTERS - 1) {
                 printf("----- VICTORY -----\n");
                 win = 1;
-                return 0;
             }
         }
     }
+
+    pthread_cancel(thread_id);
+
+    return;
+}
+
+int main() {
+    char user_input[100];
+    int quit = 0;
+
+    printf(" ____  |                  _______   \n");
+    printf("/      |____  _____   _____  |  ____  | __\n");
+    printf("|____  |   | /     \\ /     \\ | /    | |/   \n");
+    printf("    |  |   | |     | |     | | |____| | \n");
+    printf("\\___|  |   | \\_____/  \\____/ | \\_____ |  \n");
+    printf("\n\n\n");
+
+    while (!quit) {
+        // display menu
+        printf("------ MODE -------\n");
+        printf("1: Test Gmae\n");
+        printf("4: Quit\n");
+
+        printf("\x1b[32;40m>\x1b[37;40m");
+        scanf("%s", user_input);
+
+        switch (user_input[0]) {
+            case '1': TestGame(); break;
+            case '4': quit++; break;
+            default: 
+                printf("Invalid Input\n");
+        }
+    }
+    
 
     return 0;
 }
