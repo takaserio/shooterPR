@@ -13,7 +13,7 @@
 #define MAP_WIDTH  30
 
 // LayzerManager can hold references to layzers equal number to MAX_CHARACTERS
-#define MAX_LAYZERS 100 
+#define MAX_LAYZERS 100
 
 // CharacterManager can hold references to characters equal number to MAX_CHARACTERS
 #define MAX_CHARACTERS 100
@@ -26,10 +26,19 @@ struct InfoDisplay {
     char *msg;
 };
 
+// Abstract structure to handle
+// characters, layzers by collision()
+struct Object {
+	int x, y; // core coodinates of a body
+	int left_x, top_y;
+    char (*body)[OBJECT_WIDTH][CHARS];
+    //int body_width; all objects have OBJECT_HEIGHT and OBJECT_WDITH in common, meaning these variables is not used.
+    //int body_height;
+};
+
 struct Layzer {
-    int x, y; // core coodinates of a Character
-    int leftX, topY;
-    char (*body)[LAYZER_WIDTH][DATA_DISPLAYED];
+    struct Object object;
+    //char (*body)[LAYZER_WIDTH][DATA_DISPLAYED];
     enum Direction direction;
 };
 
@@ -41,11 +50,10 @@ struct LayzerManager {
 // LeftX and topY might confusing.
 // To understand what are they, reading drawMapBuffer() is good.
 struct Character {
-    int x, y;
-    int leftX, topY;
-    char (*body)[CHARACTER_WIDTH][DATA_DISPLAYED];
+    struct Object object;
+    //char (*body)[CHARACTER_WIDTH][DATA_DISPLAYED];
     int hp;
-    int layzer_power; 
+    int layzer_power;
     struct LayzerManager layzer_manager;
     enum Direction direction;
     enum LayzerType layzerType;
@@ -61,7 +69,7 @@ struct CharacterManager {
 // 2 player
 // 3 enemy
 // 4 layzer
-char map_data[MAP_HEIGHT][MAP_WIDTH][DATA_DISPLAYED];
+char map_data[MAP_HEIGHT][MAP_WIDTH][CHARS];
 
 void InitInfoDisplay(struct InfoDisplay *infoDisplay) {
     infoDisplay->itemNum = ITEM_NUM;
@@ -82,22 +90,28 @@ void InitMapData(void) {
     }
 }
 
+void InitObject(struct Object *object, int x, int y, int left_x, int top_y, char (*body)[OBJECT_WIDTH][CHARS]) {
+	object->x = x;
+	object->y = y;
+	object->left_x = left_x;
+	object->top_y = top_y;
+    object->body = body;
+}
+
 void InitCharacter(struct Character *character, int x, int y, enum Direction direction, enum CharacterType characterType, int hp, enum LayzerType layzerType) {
-    character->x = x;
-    character->y = y;
     character->direction = direction;
     character->hp = hp;
-    character->leftX = x - 2;
-    character->topY  = y - 2;
     character->layzerType = layzerType;
 
     switch (characterType) {
-        case PLAYER: 
-            character->body = player;
+        case PLAYER:
+            InitObject(&(character->object), x, y, x-2, y-2, player);
+            //character->body = player;
             break;
 
         case KAI:
-            character->body = Kai;
+            //character->body = Kai;
+            InitObject(&(character->object), x, y, x-2, y-2, Kai);
             break;
     }
 
@@ -124,38 +138,64 @@ void DeleteCharacter(struct CharacterManager *character_manager, int index) {
 
 // # TODO
 // Consider the body of the object
-int NextIsWall(int x, int y, enum Direction direction) {
+int NextIsWall(struct Object *object, enum Direction direction) {
+    struct Object virtual_object;
+    virtual_object.body = object->body;
+    virtual_object.left_x = object->left_x;
+    virtual_object.top_y  = object->top_y;
+
     switch (direction) {
-        case UP   : return (!strcmp(map_data[y - 1][x], "@"));
-        case DOWN : return (!strcmp(map_data[y + 1][x], "@"));
-        case RIGHT: return (!strcmp(map_data[y][x + 1], "@"));
-        case LEFT : return (!strcmp(map_data[y][x - 1], "@"));
+        case UP   : virtual_object.top_y -= 1;
+        case DOWN : virtual_object.top_y += 1;
+        case RIGHT: virtual_object.left_x += 1;
+        case LEFT : virtual_object.left_x -= 1;
     }
+
+    for (int i = 0; i < OBJECT_HEIGHT; i++) {
+        for (int j = 0; j < OBJECT_WIDTH; j++) {
+            if (virtual_object.body[i][j][0] != ' ') {
+                int x = virtual_object.left_x + j;
+                int y = virtual_object.top_y + i;
+
+                if (map_data[y][x][0] == '@') {
+                    return 1;
+                }
+            }
+        }
+    }
+
+    return 0;
 }
 
 // # TODO
 // the power_layzer of the character should be used.
 #define LAYZER_POWER 50
-void getDamaged(struct CharacterManager *character_manager, int character_index) {
+
+// return 1 if character is dead
+int getDamaged(struct CharacterManager *character_manager, int character_index) {
     character_manager->characters[character_index]->hp -= LAYZER_POWER;
 
     if (character_manager->characters[character_index]->hp < 1) {
         DeleteCharacter(character_manager, character_index);
+        return 1;
     }
+
+    return 0;
 }
 
 // # TODO
 // Consier the body of the character
 
 // The function is used by layzers
+// This function is no longer used
+/*
 int NextIsCharacter(struct Layzer *layzer, enum Direction direction, struct CharacterManager *character_manager) {
-    int layzer_x = layzer->x;
-    int layzer_y = layzer->y;
-    
+    int layzer_x = layzer->object.x;
+    int layzer_y = layzer->object.y;
+
     for (int i = 0; i < 100; i++) {
         if (character_manager->character_alive[i]) {
-            int character_x = character_manager->characters[i]->x;
-            int character_y = character_manager->characters[i]->y;
+
 
             switch (direction) {
                 case UP:
@@ -170,6 +210,7 @@ int NextIsCharacter(struct Layzer *layzer, enum Direction direction, struct Char
 
     return 0;
 }
+*/
 
 void MakeLayzer(struct Character *character) {
     for (int i = 0; i < MAX_LAYZERS; i++) {
@@ -182,37 +223,38 @@ void MakeLayzer(struct Character *character) {
 
             // Initialize layzer
             layzerPtr->direction = character->direction;
-            layzerPtr->x = character->x;
+
+            int x = character->object.x;
+            int y = character->object.y;
 
             switch (character->direction) {
                 case UP:
-                    layzerPtr->y = character->y - 2;
+                    switch (character->layzerType) {
+                        case GREENBEAM:
+                            InitObject(&(layzerPtr->object), x, y-2, x-1, y-1, GreenBeam);
+                            break;
+
+                        case REDBEAM:
+                            InitObject(&(layzerPtr->object), x, y-2, x-1, y-1, RedBeam);
+                            break;
+                    }
                     break;
 
                 case DOWN:
-                    layzerPtr->y = character->y + 2;
+                    switch (character->layzerType) {
+                        case GREENBEAM:
+                            InitObject(&(layzerPtr->object), x, y+2, x-1, y-1, GreenBeam);
+                            break;
+
+                        case REDBEAM:
+                            InitObject(&(layzerPtr->object), x, y+2, x-1, y-1, RedBeam);
+                            break;
+                    }
+                    break;
             }
 
             // # TODO
             // Caluculate leftX and topY using LAYZER_WIDTH and LAYZER_HEIGHT
-            layzerPtr->leftX = layzerPtr->x - 1;
-            layzerPtr->topY = layzerPtr->y - 1;
-
-            switch (character->layzerType) {
-            case GREENBEAM:
-                layzerPtr->body = GreenBeam;
-                break;
-
-            case REDBEAM:
-                layzerPtr->body = RedBeam;
-                break;
-            
-            default:
-                printf("ERROR: layzer body not fould\n");
-                printf("[Init of layzer(%d) is not completed.]\n", i);
-                sleep(3);
-            }
-
             break;
         }
     }
@@ -221,30 +263,30 @@ void MakeLayzer(struct Character *character) {
 void MovePlayer(struct Character *player, int *key_input, int pre_key_input) {
     switch (*key_input) {
         case 'w':
-            if (!NextIsWall(player->x, player->y, UP)) {
-                player->y -= 1;
-                player->topY -= 1;
+            if (!NextIsWall(&player->object, UP)) {
+                player->object.y -= 1;
+                player->object.top_y -= 1;
             }
             break;
 
         case 's':
-            if (!NextIsWall(player->x, player->y, DOWN)) {
-                player->y += 1;
-                player->topY += 1;
+            if (!NextIsWall(&player->object, DOWN)) {
+                player->object.y += 1;
+                player->object.top_y += 1;
             }
             break;
 
         case 'd':
-            if (!NextIsWall(player->x, player->y, RIGHT)) {
-                player->x += 1;
-                player->leftX += 1;
+            if (!NextIsWall(&player->object, RIGHT)) {
+                player->object.x += 1;
+                player->object.left_x += 1;
             }
             break;
 
         case 'a':
-            if (!NextIsWall(player->x, player->y, LEFT)) {
-                player->x -= 1;
-                player->leftX -= 1;
+            if (!NextIsWall(&player->object, LEFT)) {
+                player->object.x -= 1;
+                player->object.left_x -= 1;
             }
             break;
 
@@ -253,7 +295,7 @@ void MovePlayer(struct Character *player, int *key_input, int pre_key_input) {
 
             // To preven stopping player when ' ' is typed
             // use previous input
-            
+
             // This might cause a race condition because key_input is deferenced by another thread to get inputs
             // But.... This is not a big problem.
             *key_input = pre_key_input;
@@ -276,16 +318,16 @@ void moveAllCharacters(struct CharacterManager *character_manager, int *key_inpu
                     break;
 
                 case 3: // RIGHT
-                    if (!NextIsWall(characterPtr->x, characterPtr->y, RIGHT)) {
-                        character_manager->characters[i]->x += 1;
-                        character_manager->characters[i]->leftX += 1;
+                    if (!NextIsWall(&characterPtr->object, RIGHT)) {
+                        character_manager->characters[i]->object.x += 1;
+                        character_manager->characters[i]->object.left_x += 1;
                     }
                     break;
 
                 case 4: // LEFT
-                    if (!NextIsWall(characterPtr->x, characterPtr->y, LEFT)) {
-                        character_manager->characters[i]->x -= 1;
-                        character_manager->characters[i]->leftX -= 1;
+                    if (!NextIsWall(&characterPtr->object, LEFT)) {
+                        character_manager->characters[i]->object.x -= 1;
+                        character_manager->characters[i]->object.left_x -= 1;
                     }
                     break;
 
@@ -301,6 +343,7 @@ void moveAllCharacters(struct CharacterManager *character_manager, int *key_inpu
 
 // This name reminds me ARP... I miss you.
 // This function is no longer used!!
+/*
 struct Character *WhoIsAtXY(struct CharacterManager *character_manager, int x, int y) {
     for (int i = 0; i < 100; i++) {
         if (character_manager->character_alive[i]) {
@@ -310,6 +353,7 @@ struct Character *WhoIsAtXY(struct CharacterManager *character_manager, int x, i
         }
     }
 }
+*/
 
 void MoveAllLayzer(struct CharacterManager *character_manager) {
     for (int i = 0; i < MAX_CHARACTERS; i++) {
@@ -324,26 +368,26 @@ void MoveAllLayzer(struct CharacterManager *character_manager) {
 
                     switch (layzerPtr->direction) {
                         case UP:
-                            if (NextIsWall(layzerPtr->x, layzerPtr->y, layzerPtr->direction)) {
+                            if (NextIsWall(&layzerPtr->object, layzerPtr->direction)) {
                                 DeleteLayzer(&(characterPtr->layzer_manager), j);
                             } else {
-                                layzerPtr->y -= 1;
-                                layzerPtr->topY -= 1;
+                                layzerPtr->object.y -= 1;
+                                layzerPtr->object.top_y -= 1;
                             }
                             break;
-                        
+
                         case DOWN:
-                            if (NextIsWall(layzerPtr->x, layzerPtr->y, layzerPtr->direction)) {
+                            if (NextIsWall(&layzerPtr->object, layzerPtr->direction)) {
                                 DeleteLayzer(&(characterPtr->layzer_manager), j);
                             } else {
-                                layzerPtr->y += 1;
-                                layzerPtr->topY += 1;
+                                layzerPtr->object.y += 1;
+                                layzerPtr->object.top_y += 1;
                             }
                             break;
                     }
                 }
             }
-        }   
+        }
     }
 }
 
@@ -363,9 +407,9 @@ void updateBuffer(struct InfoDisplay *infoDisplay, int score, int playerHp, char
 
 // This function renders data before drawing.
 void drawMapBuffer(struct CharacterManager *character_manager) {
-    // make a buffer displayed.
-    // All infomation, player, enemies, layzers..., is inserted into the buffer.
-    char buffer[MAP_HEIGHT][MAP_WIDTH][100];
+    // create a buffer displayed.
+    // All infomation, player, enemies, layzers..., is inserted into this buffer to draw.
+    char buffer[MAP_HEIGHT][MAP_WIDTH][CHARS];
 
     for (int i = 0; i < MAP_HEIGHT; i++) {
         for (int j = 0; j < MAP_WIDTH; j++) {
@@ -373,35 +417,35 @@ void drawMapBuffer(struct CharacterManager *character_manager) {
         }
     }
 
-    // insert player and layzer's data into buffer
+    // insert chrarcter and layzers into buffer
     for (int i = 0; i < 100; i++) {
         if (character_manager->character_alive[i]) {
             // shortcut refe
             struct Character *characterPtr = character_manager->characters[i];
-            int character_x = character_manager->characters[i]->x;
-            int character_y = character_manager->characters[i]->y;
+            int character_x = character_manager->characters[i]->object.x;
+            int character_y = character_manager->characters[i]->object.y;
 
-            // draw character
-            for (int offsetY = 0; offsetY < CHARACTER_HEIGHT; offsetY++) {
-                for (int offsetX = 0; offsetX < CHARACTER_WIDTH; offsetX++) {
-                    if (characterPtr->body[offsetY][offsetX][0] != ' ') {
-                        strcpy(buffer[characterPtr->topY + offsetY][characterPtr->leftX + offsetX],
-                               characterPtr->body[offsetY][offsetX]);
+            // insert character
+            for (int offsetY = 0; offsetY < OBJECT_HEIGHT; offsetY++) {
+                for (int offsetX = 0; offsetX < OBJECT_WIDTH; offsetX++) {
+                    if (characterPtr->object.body[offsetY][offsetX][0] != ' ') {
+                        strcpy(buffer[characterPtr->object.top_y + offsetY][characterPtr->object.left_x + offsetX],
+                               characterPtr->object.body[offsetY][offsetX]);
                     }
                 }
             }
 
-            // draw layzers
+            // insert layzers
             for (int j = 0; j < MAX_LAYZERS; j++) {
                 if (characterPtr->layzer_manager.layzers_alive[j]) {
                     // shortcut refe
                     struct Layzer *layzerPtr = characterPtr->layzer_manager.layzers[j];
 
-                    for (int offsetY = 0; offsetY < LAYZER_HEIGHT; offsetY++) {
-                        for (int offsetX = 0; offsetX < LAYZER_WIDTH; offsetX++) {
-                            if (layzerPtr->body[offsetY][offsetX][0] != ' ') {
-                                strcpy(buffer[layzerPtr->topY + offsetY][layzerPtr->leftX + offsetX],
-                                       layzerPtr->body[offsetY][offsetX]);
+                    for (int offsetY = 0; offsetY < OBJECT_HEIGHT; offsetY++) {
+                        for (int offsetX = 0; offsetX < OBJECT_WIDTH; offsetX++) {
+                            if (layzerPtr->object.body[offsetY][offsetX][0] != ' ') {
+                                strcpy(buffer[layzerPtr->object.top_y + offsetY][layzerPtr->object.left_x + offsetX],
+                                       layzerPtr->object.body[offsetY][offsetX]);
                             }
                         }
                     }
@@ -413,6 +457,8 @@ void drawMapBuffer(struct CharacterManager *character_manager) {
     // # TODO
     // convert 2 dimensional array into 1 dimensional before outputing into stdout
     // to reduce latency of drawing
+
+    // draw buffer
     for (int i = 0; i < MAP_HEIGHT; i++) {
         for (int j = 0; j < MAP_WIDTH; j++) {
             printf("%s", buffer[i][j]);
@@ -439,7 +485,7 @@ void SpawnCharacter(struct CharacterManager *character_manager, int x, int y, en
             InitCharacter(character_manager->characters[i], x, y, direction, character_type, hp, layzerType);
             break;
         }
-    }    
+    }
 }
 
 
@@ -456,26 +502,57 @@ int getch(void) {
     return ch;
 }
 
-void InputThread (int *key_input) {
+void *InputThread (void *key_input) {
     while (1) {
-        *key_input = getch();
+        *(int *) key_input = getch();
     }
+
+    return 0;
 }
 
-// # TODO 
+// if obj1 and obj2 are the same coordinates return true
+int Collision(struct Object *obj1, struct Object *obj2) {
+    for (int i = 0; i < OBJECT_HEIGHT; i++) {
+        for (int j = 0; j < OBJECT_WIDTH; j++) {
+            if (obj1->body[i][j][0] != ' ') {
+                int obj1_x = obj1->left_x+j;
+                int obj1_y = obj1->top_y+i;
+
+                for (int k = 0; k < OBJECT_HEIGHT; k++) {
+                    for (int l = 0; l < OBJECT_WIDTH; l++) {
+                        if (obj2->body[k][l][0] != ' ') {
+                            int obj2_x = obj2->left_x+l;
+                            int obj2_y = obj2->top_y+k;
+
+                            if (obj1_x == obj2_x && obj1_y == obj2_y) {
+                                return 1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+// # TODO
 // Consider body of object
 // This function uses core coodinates for collision detection now
-void Collision(struct CharacterManager *character_manager) {
+
+// detect all collisions of objects with layzers based on theri coordinates and body sizes.
+// This function is neutral so there is no vector of collisions
+void Collisions_char_lay(struct CharacterManager *character_manager) {
     for (int i = 0; i < MAX_CHARACTERS; i++) {
         if (character_manager->character_alive[i]) {
             // shortcut reference
             struct Character *characterPtr1 = character_manager->characters[i];
 
-            int character_x = characterPtr1->x;
-            int character_y = characterPtr1->y;
-
             for (int j = 0; j < MAX_CHARACTERS; j++) {
-                if (character_manager->character_alive[j]) {
+                if (character_manager->character_alive[j] && j != i) {
+                    int dead = 0;
+
                     // shortcut reference
                     struct Character *characterPtr2 = character_manager->characters[j];
 
@@ -484,17 +561,18 @@ void Collision(struct CharacterManager *character_manager) {
                             // shortcut reference
                             struct Layzer *layzerPtr = characterPtr2->layzer_manager.layzers[k];
 
-                            int layzer_x = layzerPtr->x;
-                            int layzer_y = layzerPtr->y;
-
-                            if ((character_x == layzer_x) && (character_y == layzer_y)) {
-                                getDamaged(character_manager, i);
+                            if (Collision(&characterPtr1->object, &layzerPtr->object)) {
+                                if (getDamaged(character_manager, i)) {
+                                    dead++;
+                                    break;
+                                }
                             }
                         }
                     }
+
+                    if (dead) break;
                 }
             }
-            
         }
     }
 }
@@ -526,7 +604,7 @@ void TestGame() {
 
     SpawnCharacter(&character_manager, 15, 25, UP, PLAYER, 100, GREENBEAM); // index 0 is the player
     SpawnCharacter(&character_manager, 4, 4, DOWN, KAI, 100, REDBEAM);
-    SpawnCharacter(&character_manager, 11, 5, DOWN, KAI, 100, REDBEAM);
+    //SpawnCharacter(&character_manager, 11, 5, DOWN, KAI, 100, REDBEAM);
 
     // shortcut refe
     struct Character *player = character_manager.characters[0];
@@ -536,7 +614,7 @@ void TestGame() {
         MoveAllLayzer(&character_manager);
         moveAllCharacters(&character_manager, &key_input, pre_key_input);
 
-        Collision(&character_manager);
+        Collisions_char_lay(&character_manager);
 
         UpdateInfoDisplay(&infoDisplay, score, player->hp, NULL);
         draw(&infoDisplay, &character_manager);
@@ -569,20 +647,21 @@ int main() {
     char user_input[100];
     int quit = 0;
 
-    // Umm...
-    // Using tools for creating a logo? ascii art seems better \(ツ)/.
-    // making a tool like it is not a bad idea. It sounds fun.
-    printf(" ____  |                  _______   \n");
-    printf("/      |____  _____   _____  |  ____  | __\n");
-    printf("|____  |   | /     \\ /     \\ | /    | |/   \n");
-    printf("    |  |   | |     | |     | | |____| | \n");
-    printf("\\___|  |   | \\_____/  \\____/ | \\_____ |  \n");
+    printf("\x1B[92m");
+    printf("         __                __\n");
+    printf("   _____/ /_  ____  ____  / /____  _____\n");
+    printf("  / ___/ __ \\/ __ \\/ __ \\/ __/ _ \\/ ___/\n");
+    printf(" (__  ) / / / /_/ / /_/ / /_/  __/ /\n");
+    printf("/____/_/ /_/\\____/\\____/\\__/\\___/_/\n");
+    printf("\x1B[0m");
     printf("\n\n\n");
 
     while (!quit) {
         // display menu
         printf("------ MODE -------\n");
         printf("1: Test Gmae\n");
+        printf("2: ...\n");
+        printf("3: ...");
         printf("4: Quit\n");
 
         printf("\x1b[32;40m>\x1b[37;40m");

@@ -1,10 +1,13 @@
+/*
 #define LAYZER_WIDTH 3
 #define LAYZER_HEIGHT 3
-
 #define CHARACTER_WIDTH 5
 #define CHARACTER_HEIGHT 5
+*/
 
-#define DATA_DISPLAYED 50
+#define OBJECT_WIDTH 5
+#define OBJECT_HEIGHT 5
+#define CHARS 50
 
 // greetings
 // red \x1b[31;40m
@@ -28,7 +31,7 @@ enum LayzerType {
     GREENBEAM,
 };
 
-char player[CHARACTER_HEIGHT][CHARACTER_WIDTH][DATA_DISPLAYED] = {
+char player[OBJECT_HEIGHT][OBJECT_WIDTH][CHARS] = {
     {" ", " ", " ", " ", " "},
     {" ", " ", " ", " ", " "},
     {" ", "|", "+", "|", " "},
@@ -36,7 +39,7 @@ char player[CHARACTER_HEIGHT][CHARACTER_WIDTH][DATA_DISPLAYED] = {
     {" ", " ", " ", " ", " "},
 };
 
-char Kai[CHARACTER_HEIGHT][CHARACTER_WIDTH][DATA_DISPLAYED] = {
+char Kai[OBJECT_HEIGHT][OBJECT_WIDTH][CHARS] = {
     {" ", " ", " ", " ", " "},
     {" ", " ", " ", " ", " "},
     {" ", " ", "+", " ", " "},
@@ -44,14 +47,18 @@ char Kai[CHARACTER_HEIGHT][CHARACTER_WIDTH][DATA_DISPLAYED] = {
     {" ", " ", " ", " ", " "},
 };
 
-char RedBeam[LAYZER_HEIGHT][LAYZER_WIDTH][DATA_DISPLAYED] = {
-    {" ", " ", " "},
-    {" ", "\x1b[31;40m|\x1b[37;40m", " "},
-    {" ", " ", " "},
+char RedBeam[OBJECT_HEIGHT][OBJECT_WIDTH][CHARS] = {
+    {" ", " ", " ", " ", " "},
+    {" ", " ", " ", " ", " "},
+    {" ", " ", "\x1b[31;40m|\x1b[37;40m", " ", " "},
+    {" ", " ", " ", " ", " "},
+    {" ", " ", " ", " ", " "},
 };
 
-char GreenBeam[LAYZER_HEIGHT][LAYZER_WIDTH][DATA_DISPLAYED] = {
-    {" ", " ", " "},
-    {" ", "\x1b[32;40m|\x1b[37;40m", " "},
-    {" ", " ", " "},
+char GreenBeam[OBJECT_HEIGHT][OBJECT_WIDTH][CHARS] = {
+    {" ", " ", " ", " ", " "},
+    {" ", " ", " ", " ", " "},
+    {" ", " ", "\x1b[32;40m|\x1b[37;40m", " ", " "},
+    {" ", " ", " ", " ", " "},
+    {" ", " ", " ", " ", " "},
 };
