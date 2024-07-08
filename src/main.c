@@ -90,11 +90,11 @@ void InitMapData(void) {
     }
 }
 
-void InitObject(struct Object *object, int x, int y, int left_x, int top_y, char (*body)[OBJECT_WIDTH][CHARS]) {
+void InitObject(struct Object *object, int x, int y , char (*body)[OBJECT_WIDTH][CHARS]) {
 	object->x = x;
 	object->y = y;
-	object->left_x = left_x;
-	object->top_y = top_y;
+	object->left_x = x - OBJECT_WIDTH / 2;
+	object->top_y = y - OBJECT_HEIGHT / 2;
     object->body = body;
 }
 
@@ -105,13 +105,13 @@ void InitCharacter(struct Character *character, int x, int y, enum Direction dir
 
     switch (characterType) {
         case PLAYER:
-            InitObject(&(character->object), x, y, x-2, y-2, player);
+            InitObject(&character->object, x, y, player);
             //character->body = player;
             break;
 
         case KAI:
             //character->body = Kai;
-            InitObject(&(character->object), x, y, x-2, y-2, Kai);
+            InitObject(&character->object, x, y, Kai);
             break;
     }
 
@@ -212,7 +212,7 @@ int NextIsCharacter(struct Layzer *layzer, enum Direction direction, struct Char
 }
 */
 
-void MakeLayzer(struct Character *character) {
+void CreateLayzer(struct Character *character) {
     for (int i = 0; i < MAX_LAYZERS; i++) {
         if (!character->layzer_manager.layzers_alive[i]) {
             character->layzer_manager.layzers[i] = malloc(sizeof(struct Layzer));
@@ -231,11 +231,11 @@ void MakeLayzer(struct Character *character) {
                 case UP:
                     switch (character->layzerType) {
                         case GREENBEAM:
-                            InitObject(&(layzerPtr->object), x, y-2, x-1, y-1, GreenBeam);
+                            InitObject(&(layzerPtr->object), x, y-2, GreenBeam);
                             break;
 
                         case REDBEAM:
-                            InitObject(&(layzerPtr->object), x, y-2, x-1, y-1, RedBeam);
+                            InitObject(&(layzerPtr->object), x, y-2, RedBeam);
                             break;
                     }
                     break;
@@ -243,11 +243,11 @@ void MakeLayzer(struct Character *character) {
                 case DOWN:
                     switch (character->layzerType) {
                         case GREENBEAM:
-                            InitObject(&(layzerPtr->object), x, y+2, x-1, y-1, GreenBeam);
+                            InitObject(&(layzerPtr->object), x, y+2, GreenBeam);
                             break;
 
                         case REDBEAM:
-                            InitObject(&(layzerPtr->object), x, y+2, x-1, y-1, RedBeam);
+                            InitObject(&(layzerPtr->object), x, y+2, RedBeam);
                             break;
                     }
                     break;
@@ -262,28 +262,28 @@ void MakeLayzer(struct Character *character) {
 
 void MovePlayer(struct Character *player, int *key_input, int pre_key_input) {
     switch (*key_input) {
-        case 'w':
+        case 'w': case 'A':
             if (!NextIsWall(&player->object, UP)) {
                 player->object.y -= 1;
                 player->object.top_y -= 1;
             }
             break;
 
-        case 's':
+        case 's': case 'B':
             if (!NextIsWall(&player->object, DOWN)) {
                 player->object.y += 1;
                 player->object.top_y += 1;
             }
             break;
 
-        case 'd':
+        case 'd': case 'C':
             if (!NextIsWall(&player->object, RIGHT)) {
                 player->object.x += 1;
                 player->object.left_x += 1;
             }
             break;
 
-        case 'a':
+        case 'a': case 'D':
             if (!NextIsWall(&player->object, LEFT)) {
                 player->object.x -= 1;
                 player->object.left_x -= 1;
@@ -291,7 +291,7 @@ void MovePlayer(struct Character *player, int *key_input, int pre_key_input) {
             break;
 
         case ' ':
-            MakeLayzer(player);
+            CreateLayzer(player);
 
             // To preven stopping player when ' ' is typed
             // use previous input
@@ -332,7 +332,7 @@ void moveAllCharacters(struct CharacterManager *character_manager, int *key_inpu
                     break;
 
                 case 5: // Layzer
-                    MakeLayzer(characterPtr);
+                    CreateLayzer(characterPtr);
                     break;
             }
         } else if ((character_manager->character_alive[i] == 1) && (character_manager->characters[i]->direction == UP)) {
