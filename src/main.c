@@ -145,10 +145,10 @@ int NextIsWall(struct Object *object, enum Direction direction) {
     virtual_object.top_y  = object->top_y;
 
     switch (direction) {
-        case UP   : virtual_object.top_y -= 1;
-        case DOWN : virtual_object.top_y += 1;
-        case RIGHT: virtual_object.left_x += 1;
-        case LEFT : virtual_object.left_x -= 1;
+        case UP   : virtual_object.top_y  -= 1; break;
+        case DOWN : virtual_object.top_y  += 1; break;
+        case RIGHT: virtual_object.left_x += 1; break;
+        case LEFT : virtual_object.left_x -= 1; break;
     }
 
     for (int i = 0; i < OBJECT_HEIGHT; i++) {
