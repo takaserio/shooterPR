@@ -78,7 +78,7 @@ void InitInfoDisplay(struct InfoDisplay *infoDisplay) {
     infoDisplay->playerHp = 0;
 }
 
-void InitMapData(void) {
+void InitDebugMapData(void) {
     for (int i = 0; i < MAP_HEIGHT; i++) {
         for (int j = 0; j < MAP_WIDTH; j++) {
             if ((i == 0 || i == MAP_HEIGHT - 1) || (j == 0 || j == MAP_WIDTH - 1)) {
@@ -583,7 +583,9 @@ void UpdateInfoDisplay(struct InfoDisplay *infoDisplay, int score, int hp, char 
     infoDisplay->playerHp = hp;
 }
 
-void TestGame() {
+// # TODO
+// Display player's x and y
+void debug_mode() {
     struct CharacterManager character_manager;
     struct InfoDisplay infoDisplay;
     int key_input = 0;
@@ -600,7 +602,7 @@ void TestGame() {
 
     InitInfoDisplay(&infoDisplay);
     InitCharacterManager(&character_manager);
-    InitMapData();
+    InitDebugMapData();
 
     SpawnCharacter(&character_manager, 15, 25, UP, PLAYER, 100, GREENBEAM); // index 0 is the player
     SpawnCharacter(&character_manager, 4, 4, DOWN, KAI, 100, REDBEAM);
@@ -669,7 +671,7 @@ int main() {
         printf("\n");
 
         switch (user_input[0]) {
-            case '1': TestGame(); break;
+            case '1': debug_mode(); break;
             case '4': quit++; break;
             default: 
                 printf("Invalid Input\n");
