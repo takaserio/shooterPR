@@ -469,8 +469,8 @@ void drawMapBuffer(struct CharacterManager *character_manager) {
 }
 
 void draw(struct InfoDisplay *infoDisplay, struct CharacterManager *characterManager) {
-    // clear screen
-    printf("\033[2J");
+    // move cursor to home (0, 0)
+    printf("\x1B[H");
 
     drawInfoDisplay(infoDisplay);
     drawMapBuffer(characterManager);
@@ -668,7 +668,9 @@ int main() {
 
         printf("\x1b[32;40m>\x1b[37;40m");
         scanf("%s", user_input);
-        printf("\n");
+
+		// erase entire screen
+        printf("\x1B[2J]");
 
         switch (user_input[0]) {
             case '1': debug_mode(); break;
